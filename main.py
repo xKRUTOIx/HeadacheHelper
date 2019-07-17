@@ -4,6 +4,7 @@ import commands
 import keyboards
 import mongo
 import constants
+import datetime
 
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
@@ -12,9 +13,14 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 updater = Updater(token=BOT_TOKEN)
 dispatcher = updater.dispatcher
-jobq = updater.job_queue
+job_queue = updater.job_queue
 
 waiting_flags = {}
+
+# TODO: add ability to leave a comment
+# TODO: show statistic
+# TODO: change time
+# TODO: add redis for all temporary data
 
 
 def start(bot, update):
@@ -31,6 +37,23 @@ def callbacks(bot, update):
     if callback_data == constants.SETTINGS_CB:
         waiting_flags[user_id] = {constants.WAITING_FOR_TIME: True}
         bot.edit_message_text(chat_id=user_id, text=messages.SET_TIME, message_id=msg_id)
+        return
+
+    elif callback_data == constants.YES_HURT_CB:
+        bot.edit_message_text(chat_id=user_id, text=messages.YES_HURT, message_id=msg_id, reply_markup=keyboards.RATE_YOUR_PAIN)
+    elif callback_data == constants.NO_HURT_CB:
+        bot.edit_message_text(chat_id=user_id, text=messages.NO_HURT, message_id=msg_id)
+        mongo.update_data(user_id, constants.NO_PILLS_CB)
+        return
+
+    elif callback_data.startswith(constants.HURT_RATE):
+        hurt_rate = callback_data.replace(constants.HURT_RATE, '')
+        waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
+        bot.edit_message_text(chat_id=user_id, text=messages.PILLS, message_id=msg_id, reply_markup=keyboards.PILLS_QUESTION)
+
+    elif callback_data in (constants.YES_PILLS_CB, constants.YES_PILLS_CB):
+        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=waiting_flags[user_id][constants.HURT_RATE], pills=callback_data)
+        bot.edit_message_text(chat_id=user_id, text=messages.THANKS_MESSAGE, message_id=msg_id)
     return
 
 
@@ -43,7 +66,7 @@ def messages_handler(bot, update):
         # TODO: handle this case
         return
 
-    # handle case where user wants to change schedule
+    # handle case when user wants to change schedule
     if user_flags.get(constants.WAITING_FOR_TIME) is not None and user_flags.get(constants.WAITING_FOR_TIME):
         message_text = update.message.text
         time = message_text.split(':')
@@ -55,6 +78,12 @@ def messages_handler(bot, update):
         mongo.set_time(user_id, message_text)
         waiting_flags[user_id][constants.WAITING_FOR_TIME] = False
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
+        job_queue.run_daily(ask_condition, datetime.time(hour=int(time[0]), minute=int(time[1])),context=user_id, name=constants.CB_NAME)
+
+
+def ask_condition(bot, job):
+    bot.send_message(chat_id=job.context, text=messages.WAS_IT_HURT, reply_markup=keyboards.MAIN_QUESTION)
+    return
 
 
 def check_time_format(time):
