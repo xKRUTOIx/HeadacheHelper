@@ -17,6 +17,7 @@ ATE_PILLS = 'ate_pills'
 CREATED_AT = 'createdAt'
 HEADACHE_HISTORY = 'headache_history'
 DID_HURT = 'did_hurt'
+COMMENT = 'note'
 
 
 def add_user(user_id):
@@ -41,7 +42,7 @@ def set_time(user_id, time=None):
     })
 
 
-def update_data(user_id, answer, hurt_rate=None, pills=None):
+def update_data(user_id, answer, hurt_rate=None, pills=None, comment=None):
     if answer == constants.NO_HURT_CB:
         users.update_one({
             USER_ID: user_id,
@@ -64,6 +65,7 @@ def update_data(user_id, answer, hurt_rate=None, pills=None):
                     TIME: datetime.datetime.now(),
                     HURT_RATE: hurt_rate,
                     ATE_PILLS: pills,
+                    COMMENT: comment,
                 }
             }
         })
