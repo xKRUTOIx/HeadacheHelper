@@ -24,7 +24,7 @@ def add_user(user_id):
     users.update_one({
         USER_ID: user_id,
     }, {
-        SET: {
+        "$setOnInsert": {
             USER_ID: user_id,
             CREATED_AT: datetime.datetime.now(),
             HEADACHE_HISTORY: [],

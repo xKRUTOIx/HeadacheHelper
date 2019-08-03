@@ -42,7 +42,7 @@ def callbacks(bot, update):
         bot.edit_message_text(chat_id=user_id, text=messages.YES_HURT, message_id=msg_id, reply_markup=keyboards.RATE_YOUR_PAIN)
     elif callback_data == constants.NO_HURT_CB:
         bot.edit_message_text(chat_id=user_id, text=messages.NO_HURT, message_id=msg_id)
-        mongo.update_data(user_id, constants.NO_PILLS_CB)
+        mongo.update_data(user_id, answer=constants.NO_HURT_CB)
         return
 
     elif callback_data.startswith(constants.HURT_RATE):
