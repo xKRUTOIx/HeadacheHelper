@@ -47,7 +47,7 @@ def callbacks(bot, update):
         bot.edit_message_text(chat_id=user_id, text=messages.YES_HURT, message_id=msg_id, reply_markup=keyboards.RATE_YOUR_PAIN)
     elif callback_data == constants.NO_HURT_CB:
         bot.edit_message_text(chat_id=user_id, text=messages.NO_HURT, message_id=msg_id)
-        mongo.update_data(user_id, answer=constants.NO_HURT_CB)
+        mongo.update_data(user_id, answer=constants.NO_HURT_CB, timestamp=get_timestamp(user_id))
         return
 
     elif callback_data.startswith(constants.HURT_RATE):
@@ -60,7 +60,8 @@ def callbacks(bot, update):
         bot.edit_message_text(chat_id=user_id, text=messages.COMMENT, message_id=msg_id, reply_markup=keyboards.COMMENT_QUESTION)
 
     elif callback_data == constants.NO_COMMENT:
-        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=r.get(redis_key.HURT_RATE + str(user_id)), pills=callback_data)
+        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=r.get(redis_key.HURT_RATE + str(user_id)),
+                          pills=callback_data, timestamp=get_timestamp(user_id))
         r.delete(redis_key.HURT_RATE + str(user_id))
         bot.edit_message_text(chat_id=user_id, text=messages.THANKS_MESSAGE, message_id=msg_id)
 
@@ -76,6 +77,17 @@ def callbacks(bot, update):
             bot.send_message(user_id, pretty_history_msg, reply_markup=keyboards.HISTORY_KEYBOARD, parse_mode=ParseMode.MARKDOWN)
 
     return
+
+
+def get_timestamp(user_id):
+    timestamp = r.get(redis_key.LAST_DAY_TIMESTAMP + str(user_id))
+    print(timestamp, type(timestamp))
+    if timestamp is not None:
+        timestamp = datetime.datetime.strptime(timestamp, '%Y-%m-%d %H:%M:%S.%f')
+        print(timestamp, type(timestamp))
+        return timestamp
+    else:
+        return datetime.datetime.now()
 
 
 def messages_handler(bot, update):
@@ -99,7 +111,7 @@ def messages_handler(bot, update):
     if r.get(redis_key.WAITING_FOR_COMMENT + str(user_id)):
         message_text = update.message.text
         mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=r.get(redis_key.HURT_RATE + str(user_id)),
-                          pills=r.get(redis_key.PILLS + str(user_id)), comment=message_text)
+                          pills=r.get(redis_key.PILLS + str(user_id)), comment=message_text, timestamp=r.get(redis_key.LAST_DAY_TIMESTAMP + str(user_id)))
         bot.send_message(chat_id=user_id, text=messages.THANKS_MESSAGE)
         r.delete(redis_key.WAITING_FOR_COMMENT + str(user_id))
         r.delete(redis_key.PILLS + str(user_id))
@@ -107,6 +119,7 @@ def messages_handler(bot, update):
 
 
 def ask_condition(bot, job):
+    r.set(redis_key.LAST_DAY_TIMESTAMP + str(job.context), str(datetime.datetime.now()))
     bot.send_message(chat_id=job.context, text=messages.WAS_IT_HURT, reply_markup=keyboards.MAIN_QUESTION)
     return
 

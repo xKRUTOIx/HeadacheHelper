@@ -42,7 +42,7 @@ def set_time(user_id, time=None):
     })
 
 
-def update_data(user_id, answer, hurt_rate=None, pills=None, comment=None):
+def update_data(user_id, answer, timestamp, hurt_rate=None, pills=None, comment=None):
     if answer == constants.NO_HURT_CB:
         users.update_one({
             USER_ID: user_id,
@@ -50,7 +50,7 @@ def update_data(user_id, answer, hurt_rate=None, pills=None, comment=None):
             PUSH: {
                 HEADACHE_HISTORY: {
                     DID_HURT: answer,
-                    TIME: datetime.datetime.now(),
+                    TIME: timestamp,
                 }
             }
         })
@@ -62,7 +62,7 @@ def update_data(user_id, answer, hurt_rate=None, pills=None, comment=None):
             PUSH: {
                 HEADACHE_HISTORY: {
                     DID_HURT: answer,
-                    TIME: datetime.datetime.now(),
+                    TIME: timestamp,
                     HURT_RATE: hurt_rate,
                     ATE_PILLS: pills,
                     COMMENT: comment,
