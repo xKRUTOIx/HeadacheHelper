@@ -24,7 +24,6 @@ r = get_redis_connection()
 waiting_flags = {}
 
 # TODO: change time
-# TODO: add redis_db for all temporary data
 # TODO: save date to mongo according to bot's timestmap instead of .now()
 
 
