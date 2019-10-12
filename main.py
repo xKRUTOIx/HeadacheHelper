@@ -202,6 +202,7 @@ def pretty_history(history, period):
 
 
 if __name__ == '__main__':
+    restart_jobs()
     dispatcher.add_handler(CommandHandler(commands.START, start))
     dispatcher.add_handler(CallbackQueryHandler(callbacks))
     dispatcher.add_handler(MessageHandler(Filters.text, messages_handler))
