@@ -8,6 +8,7 @@ import datetime
 
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
+from babel.dates import format_datetime
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -17,7 +18,6 @@ job_queue = updater.job_queue
 
 waiting_flags = {}
 
-# TODO: show statistic
 # TODO: change time
 # TODO: add redis for all temporary data
 
@@ -47,11 +47,22 @@ def callbacks(bot, update):
 
     elif callback_data.startswith(constants.HURT_RATE):
         hurt_rate = callback_data.replace(constants.HURT_RATE, '')
-        waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
+
+        if waiting_flags.get(user_id) is None:
+            waiting_flags[user_id] = {}
+            waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
+        else:
+            waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
+
         bot.edit_message_text(chat_id=user_id, text=messages.PILLS, message_id=msg_id, reply_markup=keyboards.PILLS_QUESTION)
 
     elif callback_data in (constants.YES_PILLS_CB, constants.NO_PILLS_CB):
-        waiting_flags[user_id][constants.PILLS] = callback_data
+        if waiting_flags.get(user_id) is None:
+            waiting_flags[user_id] = {}
+            waiting_flags[user_id][constants.PILLS] = callback_data
+        else:
+            waiting_flags[user_id][constants.PILLS] = callback_data
+
         bot.edit_message_text(chat_id=user_id, text=messages.COMMENT, message_id=msg_id, reply_markup=keyboards.COMMENT_QUESTION)
 
     elif callback_data == constants.NO_COMMENT:
@@ -59,8 +70,20 @@ def callbacks(bot, update):
         bot.edit_message_text(chat_id=user_id, text=messages.THANKS_MESSAGE, message_id=msg_id)
 
     elif callback_data == constants.YES_COMMENT:
-        waiting_flags[user_id][constants.WAITING_FOR_COMMENT] = True
+        if waiting_flags.get(user_id) is None:
+            waiting_flags[user_id] = {}
+            waiting_flags[user_id][constants.WAITING_FOR_COMMENT] = True
+        else:
+            waiting_flags[user_id][constants.WAITING_FOR_COMMENT] = True
+
         bot.edit_message_text(chat_id=user_id, text=messages.YES_COMMENT, message_id=msg_id)
+
+    elif callback_data.startswith(constants.HISTORY):
+        results = mongo.get_statistic(user_id, callback_data)
+        if results is not None:
+            results = list(results)
+            pretty_history_msg = pretty_history(results, callback_data)
+            bot.send_message(user_id, pretty_history_msg)
 
     return
 
@@ -119,9 +142,68 @@ def check_time_format(time):
     return True
 
 
+def restart_jobs():
+    users = mongo.get_all_users()
+    for user in users:
+        time = user.get(mongo.TIME)
+        if time is not None:
+            job_queue.run_daily(ask_condition, datetime.time(hour=int(time.split(':')[0]),
+                                                             minute=int(time.split(':')[1])),
+                                context=user[mongo.USER_ID], name=constants.CB_NAME)
+    return
+
+
+def show_statistic(bot, update):
+    user_id = update.message.chat.id
+    bot.send_message(chat_id=user_id, text=messages.STATISTIC, reply_markup=keyboards.STATISTIC)
+    return
+
+
+def settings(bot, update):
+    user_id = update.message.chat.id
+    bot.send_message(chat_id=user_id, text=messages.SETTINGS, reply_markup=keyboards.STATISTIC)
+    return
+
+
+def pretty_history(history, period):
+    painful_days = 0
+    painfree_days = 0
+    if period == constants.ALL_TIME_CB:
+        start_date = history[0]['headache_history']['time']
+        end_date = history[len(history) - 1]['headache_history']['time']
+    elif period == constants.THIS_MONTH_CB:
+        start_date = datetime.datetime.today().replace(day=1)
+        end_date = datetime.datetime.today()
+    elif period == constants.LAST_MONTH_CB:
+        end_date = (datetime.datetime.today().replace(day=1) - datetime.timedelta(days=1))
+        start_date = end_date.replace(day=1)
+    else:
+        return "Ошибка, что-то сломалось в pretty_history()"
+
+    start_date_pretty = format_datetime(start_date, "dd MMMM YYYY", locale="ru_RU")
+    end_date_pretty = format_datetime(end_date, "dd MMMM YYYY", locale="ru_RU")
+    amount_of_days = (end_date - start_date).days
+    missed_days = amount_of_days - len(history) + 1
+
+    for res in history:
+        did_hurt = res['headache_history']['did_hurt']
+        if did_hurt == constants.YES_HURT_CB:
+            painful_days += 1
+        else:
+            painfree_days += 1
+    msg_text = "Статистика выбранный период [{} – {}].\n" \
+               "Дней за отчетный период: {}\n" \
+               "Голова болела: {}.\n" \
+               "Голова не болела: {}.\n" \
+               "Выставлено оценок: {}.\n" \
+               "Пропущено дней: {}.\n".format(start_date_pretty, end_date_pretty, amount_of_days, painful_days, painfree_days, len(history), missed_days)
+    return msg_text
+
+
 if __name__ == '__main__':
     dispatcher.add_handler(CommandHandler(commands.START, start))
     dispatcher.add_handler(CallbackQueryHandler(callbacks))
     dispatcher.add_handler(MessageHandler(Filters.text, messages_handler))
+    dispatcher.add_handler(CommandHandler(commands.HISTORY, show_statistic))
 
     updater.start_polling()

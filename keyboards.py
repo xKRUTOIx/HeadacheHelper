@@ -9,6 +9,9 @@ YES_PILLS = InlineKeyboardButton(constants.YES_PILLS_TEXT, callback_data=constan
 NO_PILLS = InlineKeyboardButton(constants.NO_PILLS_TEXT, callback_data=constants.NO_PILLS_CB)
 YES_COMMENT = InlineKeyboardButton(constants.YES_PILLS_TEXT, callback_data=constants.YES_COMMENT)
 NO_COMMENT = InlineKeyboardButton(constants.NO_PILLS_TEXT, callback_data=constants.NO_COMMENT)
+LAST_MONTH = InlineKeyboardButton(constants.LAST_MONTH_TEXT, callback_data=constants.LAST_MONTH_CB)
+THIS_MONTH = InlineKeyboardButton(constants.THIS_MONTH_TEXT, callback_data=constants.THIS_MONTH_CB)
+ALL_TIME = InlineKeyboardButton(constants.ALL_TIME_TEXT, callback_data=constants.ALL_TIME_CB)
 
 
 # keyboards
@@ -18,3 +21,4 @@ MAIN_QUESTION = InlineKeyboardMarkup([[YES_HURT, NO_HURT]])
 PILLS_QUESTION = InlineKeyboardMarkup([[YES_PILLS, NO_PILLS]])
 COMMENT_QUESTION = InlineKeyboardMarkup([[YES_COMMENT, NO_COMMENT]])
 START = InlineKeyboardMarkup([[SETTINGS]])
+STATISTIC = InlineKeyboardMarkup([[LAST_MONTH, THIS_MONTH], [ALL_TIME]])

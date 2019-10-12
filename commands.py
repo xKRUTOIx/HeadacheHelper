@@ -1,1 +1,2 @@
 START = 'start'
+HISTORY = 'history'

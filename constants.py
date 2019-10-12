@@ -1,5 +1,7 @@
 SETTINGS_CB = 'settings'
 SETTINGS_TEXT = 'Настроить'
+STATISTIC = 'История записей'
+STATISTIC_CB = 'statistic'
 
 YES_HURT_CB = 'yes_hurt'
 YES_HURT_TEXT = 'Да, болела : ('
@@ -11,6 +13,13 @@ YES_PILLS_TEXT = 'Да'
 NO_PILLS_TEXT = 'Нет'
 YES_COMMENT = 'yes_comment'
 NO_COMMENT = 'no_comment'
+THIS_MONTH_TEXT = 'Текущий месяц'
+THIS_MONTH_CB = 'history-this_month'
+LAST_MONTH_TEXT = 'Прошлый месяц'
+LAST_MONTH_CB = 'history-last_month'
+ALL_TIME_TEXT = 'За все время'
+ALL_TIME_CB = 'history-all_time'
+HISTORY = 'history-'
 
 
 WAITING_FOR_TIME = 'waiting_for_time'

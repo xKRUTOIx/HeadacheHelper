@@ -69,3 +69,28 @@ def update_data(user_id, answer, hurt_rate=None, pills=None, comment=None):
                 }
             }
         })
+
+
+def get_all_users():
+    return users.find({}, {USER_ID: 1, TIME: 1})
+
+
+def get_statistic(user_id, period=None):
+    if period is None:
+        return None
+
+    last_month_end = (datetime.datetime.today().replace(day=1) - datetime.timedelta(days=1))
+    last_month_start = last_month_end.replace(day=1)
+    this_month_start = datetime.datetime.today().replace(day=1)
+    if period == constants.LAST_MONTH_CB:
+        condition = {'headache_history.time': {'$gte': last_month_start, '$lte': last_month_end}}
+    elif period == constants.THIS_MONTH_CB:
+        condition = {'headache_history.time': {'$gte': this_month_start}}
+    elif period == constants.ALL_TIME_CB:
+        condition = {}
+    return users.aggregate([
+        {'$match': {USER_ID: user_id}},
+        {'$unwind': '$' + HEADACHE_HISTORY},
+        {'$project': {HEADACHE_HISTORY: 1}},
+        {'$match': condition}
+    ])
