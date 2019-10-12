@@ -2,8 +2,9 @@ import datetime
 import constants
 
 from pymongo import MongoClient
+from config import MONGO_LOGIN, MONGO_PASSWORD
 
-client = MongoClient('localhost', 27017)
+client = MongoClient('mongodb://{}:{}@localhost:27017/'.format(MONGO_LOGIN, MONGO_PASSWORD))
 db = client.headachehelper
 users = db.users
 
