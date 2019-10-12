@@ -199,6 +199,16 @@ def info(bot, update):
     bot.send_message(user_id, "Я вам буду писать каждый день в *{}*. Изменить время можно через команду /start".format(time), parse_mode=ParseMode.MARKDOWN)
 
 
+def help(bot, update):
+    user_id = update.message.chat.id
+    help_text = "Список команд:\n" \
+                "/start – настроить бота.\n" \
+                "/history – посмотреть статистику.\n" \
+                "/info – узнать текущие настройки.\n" \
+                "/help – список доступных команд."
+    bot.send_message(user_id, help_text)
+
+
 def pretty_history(history, period):
     painful_days = 0
     painfree_days = 0
@@ -241,5 +251,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(MessageHandler(Filters.text, messages_handler))
     dispatcher.add_handler(CommandHandler(commands.HISTORY, show_statistic))
     dispatcher.add_handler(CommandHandler(commands.INFO, info))
+    dispatcher.add_handler(CommandHandler(commands.HELP, help))
 
     updater.start_polling()
