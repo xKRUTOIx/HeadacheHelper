@@ -14,7 +14,7 @@ def get_redis_connection(decode_responses=True):
     global _redis_connection
 
     if _redis_connection[decode_responses] is None:
-        _redis_connection[decode_responses] = redis.StrictRedis(host='localhost', port=6379, db=0,
+        _redis_connection[decode_responses] = redis.StrictRedis(host='localhost', port=6379, db=3,
                                                                 decode_responses=decode_responses)
 
     return _redis_connection[decode_responses]
