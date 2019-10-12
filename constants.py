@@ -20,7 +20,11 @@ LAST_MONTH_CB = 'history-last_month'
 ALL_TIME_TEXT = 'За все время'
 ALL_TIME_CB = 'history-all_time'
 HISTORY = 'history-'
-
+DETAILED_HISTORY = 'detailed-history-'
+DETAILED_HISTORY_PAINFREE_TEXT = 'Дни без головной боли'
+DETAILED_HISTORY_PAINFUL_TEXT = 'Дни с головной болью'
+DETAILED_HISTORY_PAINFREE_CB = 'detailed-history-painfree'
+DETAILED_HISTORY_PAINFUL_CB = 'detailed-history-painful'
 
 WAITING_FOR_TIME = 'waiting_for_time'
 WAITING_FOR_COMMENT = 'waiting_for_comment'

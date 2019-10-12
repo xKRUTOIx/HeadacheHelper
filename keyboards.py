@@ -12,6 +12,8 @@ NO_COMMENT = InlineKeyboardButton(constants.NO_PILLS_TEXT, callback_data=constan
 LAST_MONTH = InlineKeyboardButton(constants.LAST_MONTH_TEXT, callback_data=constants.LAST_MONTH_CB)
 THIS_MONTH = InlineKeyboardButton(constants.THIS_MONTH_TEXT, callback_data=constants.THIS_MONTH_CB)
 ALL_TIME = InlineKeyboardButton(constants.ALL_TIME_TEXT, callback_data=constants.ALL_TIME_CB)
+PAINFREE = InlineKeyboardButton(constants.DETAILED_HISTORY_PAINFREE_TEXT, callback_data=constants.DETAILED_HISTORY_PAINFREE_CB)
+PAINFUL = InlineKeyboardButton(constants.DETAILED_HISTORY_PAINFUL_TEXT, callback_data=constants.DETAILED_HISTORY_PAINFUL_CB)
 
 
 # keyboards
@@ -22,3 +24,4 @@ PILLS_QUESTION = InlineKeyboardMarkup([[YES_PILLS, NO_PILLS]])
 COMMENT_QUESTION = InlineKeyboardMarkup([[YES_COMMENT, NO_COMMENT]])
 START = InlineKeyboardMarkup([[SETTINGS]])
 STATISTIC = InlineKeyboardMarkup([[LAST_MONTH, THIS_MONTH], [ALL_TIME]])
+HISTORY_KEYBOARD = InlineKeyboardMarkup([[PAINFUL], [PAINFREE]])

@@ -9,6 +9,7 @@ import datetime
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
 from babel.dates import format_datetime
+from telegram import ParseMode
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -84,7 +85,7 @@ def callbacks(bot, update):
         if results is not None:
             results = list(results)
             pretty_history_msg = pretty_history(results, callback_data)
-            bot.send_message(user_id, pretty_history_msg)
+            bot.send_message(user_id, pretty_history_msg, reply_markup=keyboards.HISTORY_KEYBOARD, parse_mode=ParseMode.MARKDOWN)
 
     return
 
@@ -192,12 +193,12 @@ def pretty_history(history, period):
             painful_days += 1
         else:
             painfree_days += 1
-    msg_text = "Статистика выбранный период [{} – {}].\n" \
-               "Дней за отчетный период: {}\n" \
-               "Голова болела: {}.\n" \
-               "Голова не болела: {}.\n" \
-               "Выставлено оценок: {}.\n" \
-               "Пропущено дней: {}.\n".format(start_date_pretty, end_date_pretty, amount_of_days, painful_days, painfree_days, len(history), missed_days)
+    msg_text = "Статистика за выбранный период [{} – {}].\n" \
+               "Дней за отчетный период: *{}*\n" \
+               "Голова болела: *{}*.\n" \
+               "Голова не болела: *{}*.\n" \
+               "Выставлено оценок: *{}*.\n" \
+               "Пропущено дней: *{}*.\n".format(start_date_pretty, end_date_pretty, amount_of_days, painful_days, painfree_days, len(history), missed_days)
     return msg_text
 
 
