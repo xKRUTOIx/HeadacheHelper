@@ -86,12 +86,12 @@ def get_statistic(user_id, period=None):
         condition = {'headache_history.time': {'$gte': last_month_start, '$lte': last_month_end}}
     elif period == constants.THIS_MONTH_CB:
         condition = {'headache_history.time': {'$gte': this_month_start}}
-    elif period == constants.ALL_TIME_CB:
+    else:
         condition = {}
     return users.aggregate([
         {'$match': {USER_ID: user_id}},
         {'$unwind': '$' + HEADACHE_HISTORY},
-        {'$project': {HEADACHE_HISTORY: 1}},
+        {'$project': {HEADACHE_HISTORY: 1, '_id': 0}},
         {'$match': condition}
     ])
 
