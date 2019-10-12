@@ -1,0 +1,5 @@
+WAITING_FOR_TIME = 'waiting_for_time-'
+WAITING_FOR_COMMENT = 'waiting_for_comment-'
+HURT_RATE = 'hurt_rate-'
+PILLS = 'pills-'
+COMMENT = 'comment-'

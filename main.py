@@ -5,11 +5,13 @@ import keyboards
 import mongo
 import constants
 import datetime
+import redis_key
 
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
 from babel.dates import format_datetime
 from telegram import ParseMode
+from db import get_redis_connection
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
@@ -17,10 +19,12 @@ updater = Updater(token=BOT_TOKEN)
 dispatcher = updater.dispatcher
 job_queue = updater.job_queue
 
+r = get_redis_connection()
+
 waiting_flags = {}
 
 # TODO: change time
-# TODO: add redis for all temporary data
+# TODO: add redis_db for all temporary data
 # TODO: save date to mongo according to bot's timestmap instead of .now()
 
 
@@ -36,7 +40,7 @@ def callbacks(bot, update):
     msg_id = update.callback_query.message.message_id
 
     if callback_data == constants.SETTINGS_CB:
-        waiting_flags[user_id] = {constants.WAITING_FOR_TIME: True}
+        r.set(redis_key.WAITING_FOR_TIME + str(user_id), 1)
         bot.edit_message_text(chat_id=user_id, text=messages.SET_TIME, message_id=msg_id)
         return
 
@@ -49,35 +53,20 @@ def callbacks(bot, update):
 
     elif callback_data.startswith(constants.HURT_RATE):
         hurt_rate = callback_data.replace(constants.HURT_RATE, '')
-
-        if waiting_flags.get(user_id) is None:
-            waiting_flags[user_id] = {}
-            waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
-        else:
-            waiting_flags[user_id][constants.HURT_RATE] = hurt_rate
-
+        r.set(redis_key.HURT_RATE + str(user_id), hurt_rate)
         bot.edit_message_text(chat_id=user_id, text=messages.PILLS, message_id=msg_id, reply_markup=keyboards.PILLS_QUESTION)
 
     elif callback_data in (constants.YES_PILLS_CB, constants.NO_PILLS_CB):
-        if waiting_flags.get(user_id) is None:
-            waiting_flags[user_id] = {}
-            waiting_flags[user_id][constants.PILLS] = callback_data
-        else:
-            waiting_flags[user_id][constants.PILLS] = callback_data
-
+        r.set(redis_key.PILLS + str(user_id), callback_data)
         bot.edit_message_text(chat_id=user_id, text=messages.COMMENT, message_id=msg_id, reply_markup=keyboards.COMMENT_QUESTION)
 
     elif callback_data == constants.NO_COMMENT:
-        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=waiting_flags[user_id][constants.HURT_RATE], pills=callback_data)
+        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=r.get(redis_key.HURT_RATE + str(user_id)), pills=callback_data)
+        r.delete(redis_key.HURT_RATE + str(user_id))
         bot.edit_message_text(chat_id=user_id, text=messages.THANKS_MESSAGE, message_id=msg_id)
 
     elif callback_data == constants.YES_COMMENT:
-        if waiting_flags.get(user_id) is None:
-            waiting_flags[user_id] = {}
-            waiting_flags[user_id][constants.WAITING_FOR_COMMENT] = True
-        else:
-            waiting_flags[user_id][constants.WAITING_FOR_COMMENT] = True
-
+        r.set(redis_key.WAITING_FOR_COMMENT + str(user_id), 1)
         bot.edit_message_text(chat_id=user_id, text=messages.YES_COMMENT, message_id=msg_id)
 
     elif callback_data.startswith(constants.HISTORY):
@@ -93,14 +82,8 @@ def callbacks(bot, update):
 def messages_handler(bot, update):
     user_id = update.message.chat.id
     msg_id = update.message.message_id
-    user_flags = waiting_flags.get(user_id)
-
-    if user_flags is None:
-        # TODO: handle this case
-        return
-
     # handle case when user wants to change schedule
-    if user_flags.get(constants.WAITING_FOR_TIME) is not None and user_flags.get(constants.WAITING_FOR_TIME):
+    if r.get(redis_key.WAITING_FOR_TIME + str(user_id)) is not None:
         message_text = update.message.text
         time = message_text.split(':')
 
@@ -109,16 +92,19 @@ def messages_handler(bot, update):
             return
 
         mongo.set_time(user_id, message_text)
-        waiting_flags[user_id][constants.WAITING_FOR_TIME] = False
+        r.delete(redis_key.WAITING_FOR_TIME + str(user_id))
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
-        job_queue.run_daily(ask_condition, datetime.time(hour=int(time[0]), minute=int(time[1])),context=user_id, name=constants.CB_NAME)
+        job_queue.run_daily(ask_condition, datetime.time(hour=int(time[0]), minute=int(time[1])), context=user_id, name=constants.CB_NAME)
 
     # when user wants to leave a note
-    if user_flags.get(constants.WAITING_FOR_COMMENT) is not None and user_flags.get(constants.WAITING_FOR_COMMENT):
+    if r.get(redis_key.WAITING_FOR_COMMENT + str(user_id)):
         message_text = update.message.text
-        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=waiting_flags[user_id][constants.HURT_RATE],
-                          pills=waiting_flags[user_id][constants.PILLS], comment=message_text)
+        mongo.update_data(user_id, constants.YES_HURT_CB, hurt_rate=r.get(redis_key.HURT_RATE + str(user_id)),
+                          pills=r.get(redis_key.PILLS + str(user_id)), comment=message_text)
         bot.send_message(chat_id=user_id, text=messages.THANKS_MESSAGE)
+        r.delete(redis_key.WAITING_FOR_COMMENT + str(user_id))
+        r.delete(redis_key.PILLS + str(user_id))
+        r.delete(redis_key.HURT_RATE + str(user_id))
 
 
 def ask_condition(bot, job):
