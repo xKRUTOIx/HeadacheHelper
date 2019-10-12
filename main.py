@@ -20,6 +20,7 @@ waiting_flags = {}
 
 # TODO: change time
 # TODO: add redis for all temporary data
+# TODO: save date to mongo according to bot's timestmap instead of .now()
 
 
 def start(bot, update):
