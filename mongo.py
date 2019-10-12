@@ -94,3 +94,8 @@ def get_statistic(user_id, period=None):
         {'$project': {HEADACHE_HISTORY: 1}},
         {'$match': condition}
     ])
+
+
+def get_time(user_id):
+    q = users.find_one({USER_ID: user_id}, {TIME: 1})
+    return q['time']

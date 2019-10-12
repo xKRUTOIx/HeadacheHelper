@@ -7,7 +7,6 @@ import constants
 import datetime
 import redis_key
 import ujson
-import pytz
 
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
@@ -22,11 +21,6 @@ dispatcher = updater.dispatcher
 job_queue = updater.job_queue
 
 r = get_redis_connection()
-
-waiting_flags = {}
-
-# TODO: change time
-# TODO: save date to mongo according to bot's timestmap instead of .now()
 
 
 def start(bot, update):
@@ -109,7 +103,7 @@ def pretty_detailed_history(results, filter_res):
                 pills_text = "да"
             else:
                 pills_text = "нет"
-            reply_text += "[{}]: баллы: {}, таблетки: {}, комментарий: {}\n".\
+            reply_text += "[{}]: баллы: *{}*, таблетки: *{}*, комментарий: *{}*\n".\
                 format(pretty_date, history_data[mongo.HURT_RATE], pills_text, history_data[mongo.COMMENT])
 
     return reply_text
@@ -199,6 +193,12 @@ def settings(bot, update):
     return
 
 
+def info(bot, update):
+    user_id = update.message.chat.id
+    time = mongo.get_time(user_id)
+    bot.send_message(user_id, "Я вам буду писать каждый день в *{}*. Изменить время можно через команду /start".format(time), parse_mode=ParseMode.MARKDOWN)
+
+
 def pretty_history(history, period):
     painful_days = 0
     painfree_days = 0
@@ -240,5 +240,6 @@ if __name__ == '__main__':
     dispatcher.add_handler(CallbackQueryHandler(callbacks))
     dispatcher.add_handler(MessageHandler(Filters.text, messages_handler))
     dispatcher.add_handler(CommandHandler(commands.HISTORY, show_statistic))
+    dispatcher.add_handler(CommandHandler(commands.INFO, info))
 
     updater.start_polling()
