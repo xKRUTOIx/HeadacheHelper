@@ -4,7 +4,7 @@ import constants
 from pymongo import MongoClient
 from config import MONGO_LOGIN, MONGO_PASSWORD
 
-uri = "mongodb://{}:{}@127.0.0.1/headachehelper?authSource=admin".format(MONGO_LOGIN, MONGO_PASSWORD)
+uri = "mongodb://{}:{}@127.0.0.1/headachehelper?authSource=test".format(MONGO_LOGIN, MONGO_PASSWORD)
 # client = MongoClient(host="127.0.0.1",
 #                      port=27017,
 #                      username=MONGO_LOGIN,
