@@ -4,7 +4,11 @@ import constants
 from pymongo import MongoClient
 from config import MONGO_LOGIN, MONGO_PASSWORD
 
-client = MongoClient('mongodb://{}:{}@localhost:27017/headachehelper'.format(MONGO_LOGIN, MONGO_PASSWORD))
+client = MongoClient(host="localhost",
+                     port=27017,
+                     username=MONGO_LOGIN,
+                     password=MONGO_PASSWORD,
+                     authSource="admin")
 db = client['headachehelper']
 users = db.users
 
