@@ -132,6 +132,7 @@ def messages_handler(bot, update):
             return
         server_time = adapt_time_to_server_time(time)
         mongo.set_time(user_id, server_time)
+        server_time = server_time.split(':')
         r.delete(redis_key.WAITING_FOR_TIME + str(user_id))
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
         job_queue.run_daily(ask_condition, datetime.time(hour=int(server_time[0]), minute=int(server_time[1])), context=user_id, name=constants.CB_NAME)
