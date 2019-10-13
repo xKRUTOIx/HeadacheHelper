@@ -134,7 +134,7 @@ def messages_handler(bot, update):
         mongo.set_time(user_id, server_time)
         r.delete(redis_key.WAITING_FOR_TIME + str(user_id))
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
-        job_queue.run_daily(ask_condition, datetime.time(hour=int(time[0]), minute=int(time[1])), context=user_id, name=constants.CB_NAME)
+        job_queue.run_daily(ask_condition, datetime.time(hour=int(server_time[0]), minute=int(server_time[1])), context=user_id, name=constants.CB_NAME)
         return
     # when user wants to leave a note
     if r.get(redis_key.WAITING_FOR_COMMENT + str(user_id)):
