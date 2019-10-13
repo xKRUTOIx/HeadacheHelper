@@ -184,6 +184,13 @@ def check_time_format(time):
     return True
 
 
+def adapt_server_time_to_msk(t):
+    server_date = datetime.datetime.now().replace(hour=int(t[0]), minute=int(t[1]))
+    local_date = pytz.timezone('Europe/Berlin').localize(server_date).astimezone(pytz.timezone('Europe/Moscow'))
+    local_time = local_date.strftime('%H:%M')
+    return local_time
+
+
 def restart_jobs():
     users = mongo.get_all_users()
     for user in users:
@@ -210,7 +217,7 @@ def settings(bot, update):
 def info(bot, update):
     user_id = update.message.chat.id
     time = mongo.get_time(user_id)
-    bot.send_message(user_id, "Я вам буду писать каждый день в *{}*. Изменить время можно через команду /start".format(time), parse_mode=ParseMode.MARKDOWN)
+    bot.send_message(user_id, "Я вам буду писать каждый день в *{}* (MSK). Изменить время можно через команду /start".format(adapt_server_time_to_msk(time.split(':'))), parse_mode=ParseMode.MARKDOWN)
 
 
 def help(bot, update):
