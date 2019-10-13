@@ -7,6 +7,7 @@ import constants
 import datetime
 import redis_key
 import ujson
+import pytz
 
 from config import BOT_TOKEN
 from telegram.ext import CommandHandler, MessageHandler, Filters, Updater, CallbackQueryHandler
@@ -129,8 +130,8 @@ def messages_handler(bot, update):
         if not check_time_format(time):
             bot.send_message(chat_id=user_id, text=messages.WRONG_TIME)
             return
-
-        mongo.set_time(user_id, message_text)
+        server_time = adapt_time_to_server_time(time)
+        mongo.set_time(user_id, server_time)
         r.delete(redis_key.WAITING_FOR_TIME + str(user_id))
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
         job_queue.run_daily(ask_condition, datetime.time(hour=int(time[0]), minute=int(time[1])), context=user_id, name=constants.CB_NAME)
@@ -147,6 +148,15 @@ def messages_handler(bot, update):
         return
 
     bot.send_message(user_id, "Еще не время, я сам вам напишу в {}. Чтобы изменить время напишите /start, чтобы посмотреть список команд напишите /help.")
+
+
+def adapt_time_to_server_time(t):
+    hours = int(t[0])
+    minutes = int(t[1])
+    now = datetime.datetime.now().replace(hour=hours, minute=minutes)
+    server_date = pytz.timezone('Europe/Moscow').localize(now).astimezone(pytz.timezone('Europe/Berlin'))
+    server_time = server_date.strftime('%H:%M')
+    return server_time
 
 
 def ask_condition(bot, job):
