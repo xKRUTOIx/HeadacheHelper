@@ -4,8 +4,8 @@ import constants
 from pymongo import MongoClient
 from config import MONGO_LOGIN, MONGO_PASSWORD
 
-client = MongoClient('mongodb://{}:{}@localhost:27017/'.format(MONGO_LOGIN, MONGO_PASSWORD))
-db = client.headachehelper
+client = MongoClient('mongodb://{}:{}@localhost:27017/headachehelper'.format(MONGO_LOGIN, MONGO_PASSWORD))
+db = client['headachehelper']
 users = db.users
 
 SET = '$set'
