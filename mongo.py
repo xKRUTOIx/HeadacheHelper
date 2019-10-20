@@ -104,4 +104,7 @@ def get_statistic(user_id, period=None):
 
 def get_time(user_id):
     q = users.find_one({USER_ID: user_id}, {TIME: 1})
-    return q.get('time')
+    if q is not None:
+        return q.get('time')
+    else:
+        return None

@@ -217,7 +217,11 @@ def settings(bot, update):
 def info(bot, update):
     user_id = update.message.chat.id
     time = mongo.get_time(user_id)
-    bot.send_message(user_id, "Я вам буду писать каждый день в *{}* (MSK). Изменить время можно через команду /start".format(adapt_server_time_to_msk(time.split(':'))), parse_mode=ParseMode.MARKDOWN)
+    if time is not None:
+        message_text = "Я вам буду писать каждый день в *{}* (MSK). Изменить время можно через команду /start".format(adapt_server_time_to_msk(time.split(':')))
+    else:
+        message_text = "Вы еще не настроили время, напишите команду /start чтобы это сделать : )"
+    bot.send_message(user_id, message_text, parse_mode=ParseMode.MARKDOWN)
 
 
 def help(bot, update):
