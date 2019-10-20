@@ -130,12 +130,17 @@ def messages_handler(bot, update):
         if not check_time_format(time):
             bot.send_message(chat_id=user_id, text=messages.WRONG_TIME)
             return
+
         server_time = adapt_time_to_server_time(time)
         mongo.set_time(user_id, server_time)
         server_time = server_time.split(':')
         r.delete(redis_key.WAITING_FOR_TIME + str(user_id))
         bot.send_message(chat_id=user_id, text=messages.ADDED_TIME(message_text))
-        job_queue.run_daily(ask_condition, datetime.time(hour=int(server_time[0]), minute=int(server_time[1])), context=user_id, name=constants.CB_NAME)
+        # remove previous job before execute new one
+        old_job, = job_queue.get_jobs_by_name(user_id)
+        old_job.schedule_removal()
+
+        job_queue.run_daily(ask_condition, datetime.time(hour=int(server_time[0]), minute=int(server_time[1])), context=user_id, name=user_id)
         return
     # when user wants to leave a note
     if r.get(redis_key.WAITING_FOR_COMMENT + str(user_id)):
@@ -181,7 +186,7 @@ def check_time_format(time):
     except ValueError:
         return False
 
-    if not 0 <= hours <= 24:
+    if not 0 <= hours < 24:
         return False
 
     if not 0 <= minutes <= 59:
@@ -204,7 +209,7 @@ def restart_jobs():
         if time is not None:
             job_queue.run_daily(ask_condition, datetime.time(hour=int(time.split(':')[0]),
                                                              minute=int(time.split(':')[1])),
-                                context=user[mongo.USER_ID], name=constants.CB_NAME)
+                                context=user[mongo.USER_ID], name=user[mongo.USER_ID])
     return
 
 
