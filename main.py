@@ -147,8 +147,14 @@ def messages_handler(bot, update):
         r.delete(redis_key.PILLS + str(user_id))
         r.delete(redis_key.HURT_RATE + str(user_id))
         return
+    time = mongo.get_time(user_id)
+    if time is not None:
+        time = adapt_server_time_to_msk(time.split(':'))
+        message_text = "Еще не время, я сам вам напишу в *{}*. Чтобы изменить время напишите /start, чтобы посмотреть список команд напишите /help.".format(time)
+    else:
+        message_text = "Вы еще не настроили время, напишите команду /start чтобы это сделать : )"
 
-    bot.send_message(user_id, "Еще не время, я сам вам напишу в {}. Чтобы изменить время напишите /start, чтобы посмотреть список команд напишите /help.")
+    bot.send_message(user_id, message_text, parse_mode=ParseMode.MARKDOWN)
 
 
 def adapt_time_to_server_time(t):
